@@ -20,7 +20,7 @@ func GetTables(w http.ResponseWriter, r *http.Request) {
 		db.Table(gowatable.Title).Find(GM.AdminModels[gowatable.Title])
 
 		gowatable.Rows = GM.AdminModels[gowatable.Title]
-		
+
 		gowaTables = append(gowaTables, gowatable)
 	}
 	fmt.Println(gowaTables)

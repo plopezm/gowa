@@ -71,6 +71,7 @@ func (am *GowaManager) AddModel(table_name string, columns []string, model inter
 
 func (am *GowaManager) RemoveModel(table_name string){
 	delete(am.AdminTables, table_name)
+	delete(am.AdminModels, table_name)
 }
 
 func (am *GowaManager) GetRoutes() goServerUtils.Routes {
