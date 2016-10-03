@@ -14,6 +14,7 @@ type GowaManager struct {
 	AdminModels map[string]interface{}
 	DbType      string
 	DbPath      string
+	pageSize    uint32
 }
 
 
@@ -23,10 +24,7 @@ func (am *GowaManager) Init(dbtype string, dbpath string) error{
 	if err != nil {
 		panic(err)
 	}
-	am.DB.SingularTable(true)
 	defer am.DB.Close();
-
-	//am.DB.SingularTable(true)
 
 	if err != nil {
 		return err;
@@ -43,7 +41,6 @@ func (am *GowaManager) GetSession() (*gorm.DB, error){
 
 	if am.DB.DB().Ping() != nil{
 		am.DB, err = gorm.Open(am.DbType, am.DbPath);
-		am.DB.SingularTable(true)
 		return am.DB, err;
 	}
 	return am.DB, nil;
@@ -53,11 +50,7 @@ func (am *GowaManager) End(){
 	am.DB.Close();
 }
 
-func (am *GowaManager) AddModel(table_name string, columns []string, model interface{}) error{
-	//if objects == nil{
-	//	return errors.New("objects cannot be null")
-	//}
-
+func (am *GowaManager) AddModel(table_name string, columns []string, model interface{}, pageSize uint32) error{
 	var gowaTable GowaTable
 
 	gowaTable.Title = table_name
@@ -65,6 +58,7 @@ func (am *GowaManager) AddModel(table_name string, columns []string, model inter
 
 	am.AdminTables[table_name] = gowaTable
 	am.AdminModels[table_name] = model
+	am.pageSize = pageSize
 
 	return nil
 }

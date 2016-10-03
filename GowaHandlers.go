@@ -17,11 +17,12 @@ func GetTables(w http.ResponseWriter, r *http.Request) {
 	db, _:= GM.GetSession()
 
 	for _, gowatable = range GM.AdminTables {
-		db.Table(gowatable.Title).Find(GM.AdminModels[gowatable.Title])
 
+		db.Table(gowatable.Title).Limit(GM.pageSize).Find(GM.AdminModels[gowatable.Title])
 		gowatable.Rows = GM.AdminModels[gowatable.Title]
 
 		gowaTables = append(gowaTables, gowatable)
+
 	}
 	fmt.Println(gowaTables)
 	w.WriteHeader(http.StatusOK);
@@ -38,7 +39,7 @@ func ShowTable(w http.ResponseWriter, r *http.Request) {
 
 	db, _:= GM.GetSession()
 
-	db.Table(table).Find(GM.AdminModels[table])
+	db.Table(table).Limit(GM.pageSize).Find(GM.AdminModels[table])
 
 	w.WriteHeader(http.StatusOK);
 	if err := json.NewEncoder(w).Encode(GM.AdminModels[table]); err != nil {
