@@ -9,11 +9,11 @@ import (
 var GM *GowaManager
 
 type GowaManager struct {
-	DB 		*gorm.DB
-	AdminList	map[string]GowaTable
-	AdminModels	map[string]interface{}
-	DbType		string
-	DbPath		string
+	DB          *gorm.DB
+	AdminTables map[string]GowaTable
+	AdminModels map[string]interface{}
+	DbType      string
+	DbPath      string
 }
 
 
@@ -33,7 +33,7 @@ func (am *GowaManager) Init(dbtype string, dbpath string) error{
 	}
 	am.DbPath = dbpath
 	am.DbType = dbtype
-	am.AdminList = make(map[string]GowaTable)
+	am.AdminTables = make(map[string]GowaTable)
 	am.AdminModels = make(map[string]interface{})
 	return nil
 }
@@ -63,14 +63,14 @@ func (am *GowaManager) AddModel(table_name string, columns []string, model inter
 	gowaTable.Title = table_name
 	gowaTable.Columns = columns
 
-	am.AdminList[table_name] = gowaTable
+	am.AdminTables[table_name] = gowaTable
 	am.AdminModels[table_name] = model
 
 	return nil
 }
 
 func (am *GowaManager) RemoveModel(table_name string){
-	delete(am.AdminList, table_name)
+	delete(am.AdminTables, table_name)
 }
 
 func (am *GowaManager) GetRoutes() goServerUtils.Routes {

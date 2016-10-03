@@ -14,8 +14,13 @@ func GetTables(w http.ResponseWriter, r *http.Request) {
 	var gowaTables []GowaTable
 	var gowatable GowaTable
 
-	for _, gowatable = range GM.AdminList {
-		fmt.Println(gowatable)
+	db, _:= GM.GetSession()
+
+	for _, gowatable = range GM.AdminTables {
+		db.Table(gowatable.Title).Find(GM.AdminModels[gowatable.Title])
+
+		gowatable.Rows = GM.AdminModels[gowatable.Title]
+		
 		gowaTables = append(gowaTables, gowatable)
 	}
 	fmt.Println(gowaTables)
