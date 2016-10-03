@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-func GowaStart(dbtype string, dbpath string) *GowaManager{
+func GowaStart(dbtype string, dbpath string, pageSize uint32) *GowaManager{
 	GM = new(GowaManager)
-	GM.Init(dbtype, dbpath)
+	GM.Init(dbtype, dbpath, pageSize)
 	return GM
 }
 

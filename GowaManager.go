@@ -18,7 +18,7 @@ type GowaManager struct {
 }
 
 
-func (am *GowaManager) Init(dbtype string, dbpath string) error{
+func (am *GowaManager) Init(dbtype string, dbpath string, pageSize uint32) error{
 	var err error;
 	am.DB, err = gorm.Open(dbtype, dbpath);
 	if err != nil {
@@ -33,6 +33,7 @@ func (am *GowaManager) Init(dbtype string, dbpath string) error{
 	am.DbType = dbtype
 	am.AdminTables = make(map[string]GowaTable)
 	am.AdminModels = make(map[string]interface{})
+	am.pageSize = pageSize
 	return nil
 }
 
@@ -50,7 +51,7 @@ func (am *GowaManager) End(){
 	am.DB.Close();
 }
 
-func (am *GowaManager) AddModel(table_name string, columns []string, model interface{}, pageSize uint32) error{
+func (am *GowaManager) AddModel(table_name string, columns []string, model interface{}){
 	var gowaTable GowaTable
 
 	gowaTable.Title = table_name
@@ -58,9 +59,6 @@ func (am *GowaManager) AddModel(table_name string, columns []string, model inter
 
 	am.AdminTables[table_name] = gowaTable
 	am.AdminModels[table_name] = model
-	am.pageSize = pageSize
-
-	return nil
 }
 
 func (am *GowaManager) RemoveModel(table_name string){
