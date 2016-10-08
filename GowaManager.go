@@ -69,16 +69,22 @@ func (am *GowaManager) RemoveModel(table_name string){
 func (am *GowaManager) GetRoutes() goServerUtils.Routes {
 	routes := goServerUtils.Routes{
 		goServerUtils.Route{
-			"GetTables",
+			"GetTablesStruct",
 			"GET",
 			"/gowa/api/rest/tables",
-			GetTables,
+			GetTablesStruct,
 		},
 		goServerUtils.Route{
-			"ShowTable",
+			"GetTable",
 			"GET",
 			"/gowa/api/rest/tables/show/{table}",
-			ShowTable,
+			GetTable,
+		},
+		goServerUtils.Route{
+			"ShowTableRows",
+			"GET",
+			"/gowa/api/rest/tables/show/rows/{table}",
+			ShowTableRows,
 		},
 	};
 	return routes
