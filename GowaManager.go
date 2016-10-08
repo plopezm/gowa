@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/plopezm/goServerUtils"
+	"reflect"
 )
 
 var GM *GowaManager
@@ -51,14 +52,30 @@ func (am *GowaManager) End(){
 	am.DB.Close();
 }
 
-func (am *GowaManager) AddModel(table_name string, columns []string, model interface{}){
+func parseModel(model interface{}) (string, []string){
+	typ := reflect.TypeOf(model)
+
+	// if a pointer to a struct is passed, get the type of the dereferenced object
+	if typ.Kind() == reflect.Ptr{
+		typ = typ.Elem()
+	}
+
+	columnSlice := make([]string, typ.NumField())
+
+	for i:=0;i<typ.NumField();i++ {
+		columnSlice[i] = typ.Field(i).Name
+	}
+
+	return typ.Name(), columnSlice
+}
+
+func (am *GowaManager) AddModel(model interface{}, modelArray interface{}){
 	var gowaTable GowaTable
 
-	gowaTable.Title = table_name
-	gowaTable.Columns = columns
+	gowaTable.Title, gowaTable.Columns = parseModel(model)
 
-	am.AdminTables[table_name] = gowaTable
-	am.AdminModels[table_name] = model
+	am.AdminTables[gowaTable.Title] = gowaTable
+	am.AdminModels[gowaTable.Title] = modelArray
 }
 
 func (am *GowaManager) RemoveModel(table_name string){
