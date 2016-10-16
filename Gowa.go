@@ -1,8 +1,9 @@
 package gowa
 
 import (
-	"github.com/gorilla/mux"
-	"net/http"
+	"runtime"
+	"path"
+	"fmt"
 )
 
 func GowaStart(dbtype string, dbpath string, pageSize uint32) *GowaManager{
@@ -11,6 +12,8 @@ func GowaStart(dbtype string, dbpath string, pageSize uint32) *GowaManager{
 	return GM
 }
 
-func GowaEnableWebAdmin(router *mux.Router, webpath string){
-	router.PathPrefix(webpath).Handler(http.FileServer(http.Dir("template")));
+func GowaGetTemplatePath() string{
+	_, filename, _, _ := runtime.Caller(0)
+	fmt.Println(path.Join(path.Dir(filename), "template"))
+	return path.Join(path.Dir(filename), "template")
 }

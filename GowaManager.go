@@ -20,7 +20,7 @@ type GowaManager struct {
 
 func (am *GowaManager) Init(dbtype string, dbpath string, pageSize uint32) error{
 	var err error;
-	am.DB, err = gorm.Open(dbtype, dbpath);
+	am.DB, err = gorm.Open(dbtype, dbpath)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +77,6 @@ func (am *GowaManager) AddModel(model interface{}){
 
 func (am *GowaManager) RemoveModel(table_name string){
 	delete(am.AdminTables, table_name)
-	//delete(am.AdminModels, table_name)
 }
 
 func (am *GowaManager) GetRoutes() goServerUtils.Routes {

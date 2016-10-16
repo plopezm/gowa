@@ -35,14 +35,8 @@ func GetTablesStruct(w http.ResponseWriter, r *http.Request) {
 	var gowaTables []GowaTable
 	var gowatable GowaTable
 
-	//db, _:= GM.GetSession()
-
 	for _, gowatable = range GM.AdminTables {
-
-		//db.Table(gowatable.Title).Limit(GM.pageSize).Find(GM.AdminModels[gowatable.Title])
-		//gowatable.Rows = GM.AdminModels[gowatable.Title]
 		gowaTables = append(gowaTables, gowatable)
-
 	}
 	w.WriteHeader(http.StatusOK);
 	if err := json.NewEncoder(w).Encode(gowaTables); err != nil {
