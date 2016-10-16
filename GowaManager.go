@@ -12,7 +12,6 @@ var GM *GowaManager
 type GowaManager struct {
 	DB          *gorm.DB
 	AdminTables map[string]GowaTable
-	AdminModels map[string]interface{}
 	DbType      string
 	DbPath      string
 	pageSize    uint32
@@ -33,7 +32,6 @@ func (am *GowaManager) Init(dbtype string, dbpath string, pageSize uint32) error
 	am.DbPath = dbpath
 	am.DbType = dbtype
 	am.AdminTables = make(map[string]GowaTable)
-	am.AdminModels = make(map[string]interface{})
 	am.pageSize = pageSize
 	return nil
 }
@@ -52,7 +50,7 @@ func (am *GowaManager) End(){
 	am.DB.Close();
 }
 
-func parseModel(model interface{}) (string, []string){
+func parseModel(model interface{}) (reflect.Type, string, []string){
 	typ := reflect.TypeOf(model)
 
 	// if a pointer to a struct is passed, get the type of the dereferenced object
@@ -66,21 +64,20 @@ func parseModel(model interface{}) (string, []string){
 		columnSlice[i] = typ.Field(i).Name
 	}
 
-	return typ.Name(), columnSlice
+	return typ, typ.Name(), columnSlice
 }
 
-func (am *GowaManager) AddModel(model interface{}, modelArray interface{}){
+func (am *GowaManager) AddModel(model interface{}){
 	var gowaTable GowaTable
 
-	gowaTable.Title, gowaTable.Columns = parseModel(model)
+	gowaTable.Model, gowaTable.Title, gowaTable.Columns = parseModel(model)
 
 	am.AdminTables[gowaTable.Title] = gowaTable
-	am.AdminModels[gowaTable.Title] = modelArray
 }
 
 func (am *GowaManager) RemoveModel(table_name string){
 	delete(am.AdminTables, table_name)
-	delete(am.AdminModels, table_name)
+	//delete(am.AdminModels, table_name)
 }
 
 func (am *GowaManager) GetRoutes() goServerUtils.Routes {
@@ -102,6 +99,18 @@ func (am *GowaManager) GetRoutes() goServerUtils.Routes {
 			"GET",
 			"/gowa/api/rest/tables/show/rows/{table}",
 			ShowTableRows,
+		},
+		goServerUtils.Route{
+			"AddTableRow",
+			"PUT",
+			"/gowa/api/rest/tables/add/row/{table}",
+			AddTableRow,
+		},
+		goServerUtils.Route{
+			"RemoveTableRow",
+			"DELETE",
+			"/gowa/api/rest/tables/remove/row/{table}",
+			RemoveTableRow,
 		},
 	};
 	return routes
