@@ -6,22 +6,22 @@ const (
 	PERM_RW
 )
 
-type User struct{
+type GowaUser struct{
 
 	Email		string
 	Passwd		string
 	Permission	uint8
 }
 
-func (u User) IsValid() bool{
+func (u GowaUser) IsValid() bool{
 	if u.Email != "" && u.Passwd != ""{
 		return true;
 	}
 	return false;
 }
 
-func (u User) Create() error{
-	db, _:= GM.GetSession();
+func (u GowaUser) Create() error{
+	db, _:= GM.getSession();
 
 	err := db.Create(&u).Error;
 	if err != nil {
@@ -30,8 +30,8 @@ func (u User) Create() error{
 	return nil;
 }
 
-func (u User) Delete() error{
-	db, _:= GM.GetSession();
+func (u GowaUser) Delete() error{
+	db, _:= GM.getSession();
 
 	err := db.Delete(&u).Error;
 	if err != nil {

@@ -9,14 +9,24 @@ import (
 	"github.com/plopezm/goServerUtils"
 )
 
-func GowaStart(dbtype string, dbpath string, pageSize uint32) *GowaManager{
+func Init(dbtype string, dbpath string, pageSize uint32) *GowaManager{
 	GM = new(GowaManager)
-	GM.Init(dbtype, dbpath, pageSize)
+	GM.init(dbtype, dbpath, pageSize)
 	return GM
 }
 
+func GowaCreateAdminUser(email string, passwd string){
+	gowausr := GowaUser{
+		Email:email,
+		Passwd:passwd,
+		Permission:PERM_RW,
+	}
+
+	GM.db.Create(&gowausr)
+}
+
 func GowaAddRoutes(router *mux.Router) *mux.Router{
-	for _,route := range GM.GetRoutes(){
+	for _,route := range GM.getRoutes(){
 		var handler http.Handler
 		handler = route.HandlerFunc
 		handler = goServerUtils.Logger(handler, route.Name)

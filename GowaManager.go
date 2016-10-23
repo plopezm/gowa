@@ -5,49 +5,56 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/plopezm/goServerUtils"
 	"reflect"
+	"fmt"
 )
 
 var GM *GowaManager
 
 type GowaManager struct {
-	DB          *gorm.DB
-	AdminTables map[string]GowaTable
-	DbType      string
-	DbPath      string
-	pageSize    uint32
+	db          *gorm.DB
+	adminTables map[string]GowaTable
+	dbType      string
+	dbPath      string
+	PageSize    uint32
 }
 
 
-func (am *GowaManager) Init(dbtype string, dbpath string, pageSize uint32) error{
+func (am *GowaManager) init(dbtype string, dbpath string, pageSize uint32) error{
 	var err error;
-	am.DB, err = gorm.Open(dbtype, dbpath)
+	am.db, err = gorm.Open(dbtype, dbpath)
 	if err != nil {
 		panic(err)
 	}
-	defer am.DB.Close();
+	defer am.db.Close();
 
 	if err != nil {
 		return err;
 	}
-	am.DbPath = dbpath
-	am.DbType = dbtype
-	am.AdminTables = make(map[string]GowaTable)
-	am.pageSize = pageSize
+	am.dbPath = dbpath
+	am.dbType = dbtype
+	am.adminTables = make(map[string]GowaTable)
+	am.PageSize = pageSize
+
+	if err := am.db.AutoMigrate(GowaUser{}).Error; err != nil {
+		txt := "AutoMigrate Job table failed"
+		panic( fmt.Sprintf( "%s: %s", txt, err ) )
+	}
+
 	return nil
 }
 
-func (am *GowaManager) GetSession() (*gorm.DB, error){
+func (am *GowaManager) getSession() (*gorm.DB, error){
 	var err error;
 
-	if am.DB.DB().Ping() != nil{
-		am.DB, err = gorm.Open(am.DbType, am.DbPath);
-		return am.DB, err;
+	if am.db.DB().Ping() != nil{
+		am.db, err = gorm.Open(am.dbType, am.dbPath);
+		return am.db, err;
 	}
-	return am.DB, nil;
+	return am.db, nil;
 }
 
 func (am *GowaManager) End(){
-	am.DB.Close();
+	am.db.Close();
 }
 
 func parseModel(model interface{}) (reflect.Type, string, []string){
@@ -72,15 +79,27 @@ func (am *GowaManager) AddModel(model interface{}){
 
 	gowaTable.Model, gowaTable.Title, gowaTable.Columns = parseModel(model)
 
-	am.AdminTables[gowaTable.Title] = gowaTable
+	am.adminTables[gowaTable.Title] = gowaTable
 }
 
 func (am *GowaManager) RemoveModel(table_name string){
-	delete(am.AdminTables, table_name)
+	delete(am.adminTables, table_name)
 }
 
-func (am *GowaManager) GetRoutes() goServerUtils.Routes {
+func (am *GowaManager) getRoutes() goServerUtils.Routes {
 	routes := goServerUtils.Routes{
+		goServerUtils.Route{
+			"LoginAdmin",
+			"GET",
+			"/gowa/api/login",
+			Login,
+		},
+		goServerUtils.Route{
+			"CreateAdmin",
+			"PUT",
+			"/gowa/api/register",
+			CreateUser,
+		},
 		goServerUtils.Route{
 			"GetTablesStruct",
 			"GET",
