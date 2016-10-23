@@ -49,7 +49,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 
 	session.Values["gowa"] = user
 	session.Save(r, w);
-	w.WriteHeader(http.StatusFound);
+	w.WriteHeader(http.StatusOK);
 }
 
 

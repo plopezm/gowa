@@ -22,7 +22,9 @@ func GowaCreateAdminUser(email string, passwd string){
 		Permission:PERM_RW,
 	}
 
-	GM.db.Create(&gowausr)
+	db, _ := GM.getSession()
+
+	db.Create(&gowausr)
 }
 
 func GowaRemoveAdminUser(email string, passwd string){

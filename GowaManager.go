@@ -3,6 +3,9 @@ package gowa
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/plopezm/goServerUtils"
 	"reflect"
 	"fmt"
