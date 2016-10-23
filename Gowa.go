@@ -25,6 +25,16 @@ func GowaCreateAdminUser(email string, passwd string){
 	GM.db.Create(&gowausr)
 }
 
+func GowaRemoveAdminUser(email string, passwd string){
+	gowausr := GowaUser{
+		Email:email,
+		Passwd:passwd,
+		Permission:PERM_RW,
+	}
+
+	GM.db.Delete(&gowausr)
+}
+
 func GowaAddRoutes(router *mux.Router) *mux.Router{
 	for _,route := range GM.getRoutes(){
 		var handler http.Handler
