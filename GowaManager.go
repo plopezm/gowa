@@ -92,6 +92,12 @@ func (am *GowaManager) RemoveModel(table_name string){
 func (am *GowaManager) getRoutes() goServerUtils.Routes {
 	routes := goServerUtils.Routes{
 		goServerUtils.Route{
+			"ValidateSession",
+			"GET",
+			"/gowa/api/validate",
+			ValidateSession,
+		},
+		goServerUtils.Route{
 			"LoginAdmin",
 			"GET",
 			"/gowa/api/login",

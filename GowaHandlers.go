@@ -9,14 +9,33 @@ import (
 	"reflect"
 	"github.com/gorilla/sessions"
 	"encoding/gob"
+	"encoding/base64"
+	"crypto/rand"
 )
 
 var store * sessions.CookieStore
 
 func init(){
+	bytes, _ := generateRandomBytes(64);
 	//Registers user in gob to use as session variable
-	store = sessions.NewCookieStore([]byte("lzi3Fk7o6YC7t7jwEAkhRMcLF9Cu0NIosQAI5MLFw7aFeR58Dst3weAopP48Gjn0K70t1ibcO9BWJbHZcpgmg1ZwyUuCwFLSVYeauCItw5bL43WUHoOlzgDmnGJx3PUU1QitNHaRCKEDb2J9cAIkvEw5nMuPwXY3u4EUjOKgK8ifEfDRDquuDQwKVbmh7Pmk4iQXmSUp"))
+	store = sessions.NewCookieStore(bytes)
 	gob.Register(&GowaUser{});
+}
+
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func generateRandomString(s int) (string, error) {
+	b, err := generateRandomBytes(s)
+	return base64.URLEncoding.EncodeToString(b), err
 }
 
 /****************************************
@@ -41,28 +60,43 @@ func Login(w http.ResponseWriter, r *http.Request){
 		return;
 	}
 
-	session, err := store.Get(r, "gowa-session")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	session, _ := store.Get(r, "gowasession")
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusInternalServerError)
+	//	return
+	//}
 
-	session.Values["gowa"] = user
+	session.Values["user"] = user
 	session.Save(r, w);
 	w.WriteHeader(http.StatusOK);
 }
 
-
-func CreateUser(w http.ResponseWriter, r *http.Request){
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	session, err := store.Get(r, "gowa-session")
+func ValidateSession(w http.ResponseWriter, r *http.Request){
+	session, err := store.Get(r, "gowasession")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	user := session.Values["gowa"].(*GowaUser)
+	val := session.Values["user"];
+	if _, ok := val.(*GowaUser); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK);
+}
+
+func CreateUser(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	session, err := store.Get(r, "gowasession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	user := session.Values["user"].(*GowaUser)
 	if user != nil && user.Permission == PERM_RW {
 		http.Error(w, "User not valid", http.StatusUnauthorized)
 		return
