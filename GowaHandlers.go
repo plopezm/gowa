@@ -11,6 +11,7 @@ import (
 	"encoding/gob"
 	"encoding/base64"
 	"crypto/rand"
+	"errors"
 )
 
 var store * sessions.CookieStore
@@ -36,6 +37,26 @@ func generateRandomBytes(n int) ([]byte, error) {
 func generateRandomString(s int) (string, error) {
 	b, err := generateRandomBytes(s)
 	return base64.URLEncoding.EncodeToString(b), err
+}
+
+func validateSession(w http.ResponseWriter, r *http.Request) (*sessions.Session, *GowaUser, error){
+	var user *GowaUser
+	var ok bool
+
+	session, err := store.Get(r, "gowasession")
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil, nil, err
+	}
+
+	val := session.Values["user"];
+	if user, ok = val.(*GowaUser); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil, nil, errors.New("User not found")
+	}
+
+	return session, user, nil
+
 }
 
 /****************************************
@@ -72,18 +93,11 @@ func Login(w http.ResponseWriter, r *http.Request){
 }
 
 func ValidateSession(w http.ResponseWriter, r *http.Request){
-	session, err := store.Get(r, "gowasession")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
 		return
 	}
-
-	val := session.Values["user"];
-	if _, ok := val.(*GowaUser); !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK);
 }
 
@@ -96,7 +110,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	user := session.Values["user"].(*GowaUser)
+	var user *GowaUser
+	var ok bool
+
+	val := session.Values["user"];
+	if user, ok = val.(*GowaUser); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	if user != nil && user.Permission == PERM_RW {
 		http.Error(w, "User not valid", http.StatusUnauthorized)
 		return
@@ -153,6 +175,12 @@ func deserialize(r *http.Request, typ reflect.Type) (interface{}, error){
 }
 
 func GetTablesStruct(w http.ResponseWriter, r *http.Request) {
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
 
 	var gowaTables []GowaTable
@@ -168,6 +196,12 @@ func GetTablesStruct(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTable(w http.ResponseWriter, r *http.Request) {
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
 
 	vars := mux.Vars(r);
@@ -194,6 +228,12 @@ func GetTable(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowTableRows(w http.ResponseWriter, r *http.Request) {
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
 
 	vars := mux.Vars(r);
@@ -217,6 +257,12 @@ func ShowTableRows(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddTableRow(w http.ResponseWriter, r *http.Request) {
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
 	vars := mux.Vars(r)
 	table := vars["table"]
@@ -238,6 +284,12 @@ func AddTableRow(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemoveTableRow(w http.ResponseWriter, r *http.Request) {
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
 	vars := mux.Vars(r)
 	table := vars["table"]
