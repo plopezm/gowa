@@ -8,12 +8,17 @@ Gowa is a web admin manager for Go. Currently Gowa is being developed.
     /**==================================
     		ADMIN MANAGER MODULE
      ==================================*/
+        //Starting gowa with SQLite3 driver
     	GM := gowa.GowaStart("sqlite3", "test.db", 10)
 
+        //Adding modules to the admin manager
     	GM.AddModel(&User{})
     	GM.AddModel(&Company{})
     	GM.AddModel(&Driver{})
     	GM.AddModel(&Vehicle{})
+
+    	//Generate first user
+    	gowa.GowaCreateAdminUser("pabloplm@gmail.com", "example")
 
         //The router is a *mux.Router
     	gowa.GowaAddRoutes(router);
