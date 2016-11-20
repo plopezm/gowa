@@ -18,9 +18,11 @@ var store * sessions.CookieStore
 
 func init(){
 	bytes, _ := generateRandomBytes(64);
-	//Registers user in gob to use as session variable
 	store = sessions.NewCookieStore(bytes)
-	gob.Register(&GowaUser{});
+
+	//Registers user in gob to use as session variable
+	gob.Register(&GowaColumn{})
+	gob.Register(&GowaUser{})
 }
 
 func generateRandomBytes(n int) ([]byte, error) {
@@ -183,16 +185,27 @@ func GetTablesStruct(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
 
-	var gowaTables []GowaTable
-	var gowatable GowaTable
-
-	for _, gowatable = range GM.adminTables {
-		gowaTables = append(gowaTables, gowatable)
-	}
 	w.WriteHeader(http.StatusOK);
-	if err := json.NewEncoder(w).Encode(gowaTables); err != nil {
+	if err := json.NewEncoder(w).Encode(GM.adminTables); err != nil {
 		panic(err)
 	}
+}
+
+func GetTableStruct(w http.ResponseWriter, r *http.Request){
+	_, _, err := validateSession(w, r)
+	if(err != nil) {
+		w.Write([]byte(err.Error()));
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8");
+	vars := mux.Vars(r);
+	table := vars["table"];
+
+	w.WriteHeader(http.StatusOK);
+	if err := json.NewEncoder(w).Encode(GM.adminTables[table]); err != nil {
+		panic(err)
+	}
+
 }
 
 func GetTable(w http.ResponseWriter, r *http.Request) {
@@ -211,19 +224,22 @@ func GetTable(w http.ResponseWriter, r *http.Request) {
 
 	db, _:= GM.getSession()
 
-	typ := GM.adminTables[table].Model
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	sliceType := reflect.MakeSlice(reflect.SliceOf(typ), 0, 0)
-	slice := reflect.New(sliceType.Type()).Interface()
+	if typ := GM.adminTables[table].Model; typ != nil {
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+		sliceType := reflect.MakeSlice(reflect.SliceOf(typ), 0, 0)
+		slice := reflect.New(sliceType.Type()).Interface()
 
-	db.Table(gowatable.Title).Limit(GM.PageSize).Find(slice)
-	gowatable.Rows = slice
+		db.Table(gowatable.Title).Limit(GM.PageSize).Find(slice)
+		gowatable.Rows = slice
 
-	w.WriteHeader(http.StatusOK);
-	if err := json.NewEncoder(w).Encode(gowatable); err != nil {
-		panic(err)
+		w.WriteHeader(http.StatusOK);
+		if err := json.NewEncoder(w).Encode(gowatable); err != nil {
+			panic(err)
+		}
+	}else{
+		w.WriteHeader(http.StatusNotFound);
 	}
 }
 
@@ -241,18 +257,21 @@ func ShowTableRows(w http.ResponseWriter, r *http.Request) {
 
 	db, _:= GM.getSession()
 
-	typ := GM.adminTables[table].Model
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	sliceType := reflect.MakeSlice(reflect.SliceOf(typ), 0, 0)
-	slice := reflect.New(sliceType.Type()).Interface()
+	if typ := GM.adminTables[table].Model; typ != nil {
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+		sliceType := reflect.MakeSlice(reflect.SliceOf(typ), 0, 0)
+		slice := reflect.New(sliceType.Type()).Interface()
 
-	db.Table(table).Limit(GM.PageSize).Find(slice)
+		db.Table(table).Limit(GM.PageSize).Find(slice)
 
-	w.WriteHeader(http.StatusOK);
-	if err := json.NewEncoder(w).Encode(slice); err != nil {
-		panic(err)
+		w.WriteHeader(http.StatusOK);
+		if err := json.NewEncoder(w).Encode(slice); err != nil {
+			panic(err)
+		}
+	}else{
+		w.WriteHeader(http.StatusNotFound)
 	}
 }
 

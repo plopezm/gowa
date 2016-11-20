@@ -9,6 +9,7 @@ import (
 	"github.com/plopezm/goServerUtils"
 	"reflect"
 	"fmt"
+	"strings"
 )
 
 var GM *GowaManager
@@ -60,7 +61,7 @@ func (am *GowaManager) End(){
 	am.db.Close();
 }
 
-func parseModel(model interface{}) (reflect.Type, string, []string){
+func parseModel(model interface{}) (reflect.Type, string, []GowaColumn){
 	typ := reflect.TypeOf(model)
 
 	// if a pointer to a struct is passed, get the type of the dereferenced object
@@ -68,10 +69,21 @@ func parseModel(model interface{}) (reflect.Type, string, []string){
 		typ = typ.Elem()
 	}
 
-	columnSlice := make([]string, typ.NumField())
+	columnSlice := make([]GowaColumn, typ.NumField())
 
 	for i:=0;i<typ.NumField();i++ {
-		columnSlice[i] = typ.Field(i).Name
+		gowacol := GowaColumn{}
+		gowacol.Name = typ.Field(i).Name
+		gowacol.Ctype = typ.Field(i).Type.Name()
+
+		if val, ok := typ.Field(i).Tag.Lookup("gorm"); ok {
+			if strings.Contains(val, "primary_key") {
+				gowacol.Pk = true
+			}else if( strings.Contains(val, "foreign_key")){
+				gowacol.Fk = true
+			}
+		}
+		columnSlice[i] = gowacol
 	}
 
 	return typ, typ.Name(), columnSlice
@@ -114,6 +126,12 @@ func (am *GowaManager) getRoutes() goServerUtils.Routes {
 			"GET",
 			"/gowa/api/rest/tables",
 			GetTablesStruct,
+		},
+		goServerUtils.Route{
+			"GetTableStruct",
+			"GET",
+			"/gowa/api/rest/tables/struct/{table}",
+			GetTableStruct,
 		},
 		goServerUtils.Route{
 			"GetTable",
