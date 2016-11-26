@@ -8,7 +8,6 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/plopezm/goServerUtils"
 	"reflect"
-	"fmt"
 	"strings"
 )
 
@@ -41,7 +40,7 @@ func (am *GowaManager) init(dbtype string, dbpath string, pageSize uint32) error
 
 	if err := am.db.AutoMigrate(GowaUser{}).Error; err != nil {
 		txt := "AutoMigrate Job table failed"
-		panic( fmt.Sprintf( "%s: %s", txt, err ) )
+		panic( txt )
 	}
 
 	return nil
@@ -61,6 +60,47 @@ func (am *GowaManager) End(){
 	am.db.Close();
 }
 
+func isComposed(v interface{}) (bool){
+
+	switch t:= v.(type){
+
+	case int8, int16, int, int32, int64, uint8, uint16, uint, uint32, uint64, float32, float64:
+		return false;
+	case string:
+		return false;
+	default:
+		_ = t;
+		return true;
+	}
+}
+
+func manageTag(gowacol *GowaColumn,tag string){
+	if strings.Contains(tag, ";") {
+		attrs := strings.Split(tag, ";")
+		for i:=0;i<len(attrs);i++ {
+			if strings.Contains(attrs[i], ":") {
+				fieldVal := strings.Split(attrs[i], ":")
+				switch(fieldVal[0]){
+				case "fk_table":
+					gowacol.Fktab = fieldVal[1]
+				case "fk_col":
+					gowacol.Fkcol = fieldVal[1]
+				}
+				continue
+			}
+			switch attrs[i] {
+			case "pk":
+				gowacol.Pk = true
+			}
+		}
+	}
+
+	switch tag {
+	case "pk":
+		gowacol.Pk = true
+	}
+}
+
 func parseModel(model interface{}) (reflect.Type, string, []GowaColumn){
 	typ := reflect.TypeOf(model)
 
@@ -76,13 +116,10 @@ func parseModel(model interface{}) (reflect.Type, string, []GowaColumn){
 		gowacol.Name = typ.Field(i).Name
 		gowacol.Ctype = typ.Field(i).Type.Name()
 
-		if val, ok := typ.Field(i).Tag.Lookup("gorm"); ok {
-			if strings.Contains(val, "primary_key") {
-				gowacol.Pk = true
-			}else if( strings.Contains(val, "foreign_key")){
-				gowacol.Fk = true
-			}
+		if val, ok := typ.Field(i).Tag.Lookup("gowa"); ok {
+			manageTag(&gowacol, val)
 		}
+
 		columnSlice[i] = gowacol
 	}
 

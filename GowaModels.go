@@ -3,10 +3,11 @@ package gowa
 import "reflect"
 
 type GowaColumn struct {
-	Name 	string			`json:"name"`
-	Ctype 	string			`json:"ctype"`
-	Pk	bool			`json:"pk"`
-	Fk	bool			`json:"fk"`
+	Name 		string			`json:"name"`
+	Ctype 		string			`json:"ctype"`
+	Pk		bool			`json:"pk"`
+	Fktab		string			`json:"fktab"`
+	Fkcol		string			`json:"fkcol"`
 }
 
 type GowaTable struct {
