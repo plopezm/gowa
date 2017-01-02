@@ -24,7 +24,7 @@ func GowaCreateAdminUser(email string, passwd string){
 
 	db, _ := GM.getSession()
 
-	db.Create(&gowausr)
+	db.Insert(&gowausr)
 }
 
 func GowaRemoveAdminUser(email string, passwd string){
@@ -34,7 +34,7 @@ func GowaRemoveAdminUser(email string, passwd string){
 		Permission:PERM_RW,
 	}
 
-	GM.db.Delete(&gowausr)
+	GM.db.Remove(&gowausr)
 }
 
 func GowaAddRoutes(router *mux.Router) *mux.Router{

@@ -1,20 +1,16 @@
 package gowa
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/plopezm/goServerUtils"
 	"reflect"
 	"strings"
+	"github.com/plopezm/goedb"
 )
 
 var GM *GowaManager
 
 type GowaManager struct {
-	db          *gorm.DB
+	db          *goedb.DB
 	adminTables map[string]GowaTable
 	dbType      string
 	dbPath      string
@@ -24,7 +20,9 @@ type GowaManager struct {
 
 func (am *GowaManager) init(dbtype string, dbpath string, pageSize uint32) error{
 	var err error;
-	am.db, err = gorm.Open(dbtype, dbpath)
+	am.db = goedb.NewGoeDB()
+
+	err = am.db.Open(dbtype, dbpath)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +36,7 @@ func (am *GowaManager) init(dbtype string, dbpath string, pageSize uint32) error
 	am.adminTables = make(map[string]GowaTable)
 	am.PageSize = pageSize
 
-	if err := am.db.AutoMigrate(GowaUser{}).Error; err != nil {
+	if err := am.db.Migrate(GowaUser{}).Error; err != nil {
 		txt := "AutoMigrate Job table failed"
 		panic( txt )
 	}
@@ -46,11 +44,11 @@ func (am *GowaManager) init(dbtype string, dbpath string, pageSize uint32) error
 	return nil
 }
 
-func (am *GowaManager) getSession() (*gorm.DB, error){
+func (am *GowaManager) getSession() (*goedb.DB, error){
 	var err error;
 
-	if am.db.DB().Ping() != nil{
-		am.db, err = gorm.Open(am.dbType, am.dbPath);
+	if am.db.DB.Ping() != nil{
+		err = am.db.Open(am.dbType, am.dbPath);
 		return am.db, err;
 	}
 	return am.db, nil;
@@ -74,7 +72,7 @@ func isComposed(v interface{}) (bool){
 	}
 }
 
-func manageTag(gowacol *GowaColumn,tag string){
+func manageTag(gowacol *GowaColumn,tag string) (bool){
 	if strings.Contains(tag, ";") {
 		attrs := strings.Split(tag, ";")
 		for i:=0;i<len(attrs);i++ {
@@ -91,6 +89,8 @@ func manageTag(gowacol *GowaColumn,tag string){
 			switch attrs[i] {
 			case "pk":
 				gowacol.Pk = true
+			case "ignore":
+				return false
 			}
 		}
 	}
@@ -98,10 +98,15 @@ func manageTag(gowacol *GowaColumn,tag string){
 	switch tag {
 	case "pk":
 		gowacol.Pk = true
+	case "ignore":
+		return false
 	}
+
+	return true
 }
 
 func parseModel(model interface{}) (reflect.Type, string, []GowaColumn){
+	var size uint
 	typ := reflect.TypeOf(model)
 
 	// if a pointer to a struct is passed, get the type of the dereferenced object
@@ -111,16 +116,22 @@ func parseModel(model interface{}) (reflect.Type, string, []GowaColumn){
 
 	columnSlice := make([]GowaColumn, typ.NumField())
 
+	size = 0
 	for i:=0;i<typ.NumField();i++ {
 		gowacol := GowaColumn{}
 		gowacol.Name = typ.Field(i).Name
 		gowacol.Ctype = typ.Field(i).Type.Name()
 
 		if val, ok := typ.Field(i).Tag.Lookup("gowa"); ok {
-			manageTag(&gowacol, val)
-		}
+			res := manageTag(&gowacol, val);
+			if !res {
+				continue
+			}
 
-		columnSlice[i] = gowacol
+
+		}
+		columnSlice[size] = gowacol
+		size++
 	}
 
 	return typ, typ.Name(), columnSlice

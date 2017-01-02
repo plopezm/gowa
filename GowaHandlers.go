@@ -78,9 +78,10 @@ func Login(w http.ResponseWriter, r *http.Request){
 
 	db, _:= GM.getSession();
 
-	if db.Where("Email = ? AND Passwd = ?", usr, pass).First(&user).RecordNotFound(){
-		w.WriteHeader(http.StatusNotFound);
-		return;
+	err := db.First(&user, "Email = "+usr+" AND Passwd = "+pass+"")
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	session, _ := store.Get(r, "gowasession")
@@ -231,7 +232,13 @@ func GetTable(w http.ResponseWriter, r *http.Request) {
 		sliceType := reflect.MakeSlice(reflect.SliceOf(typ), 0, 0)
 		slice := reflect.New(sliceType.Type()).Interface()
 
-		db.Table(gowatable.Title).Limit(GM.PageSize).Find(slice)
+		err = db.Find(&slice, "")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError);
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		gowatable.Rows = slice
 
 		w.WriteHeader(http.StatusOK);
@@ -264,7 +271,12 @@ func ShowTableRows(w http.ResponseWriter, r *http.Request) {
 		sliceType := reflect.MakeSlice(reflect.SliceOf(typ), 0, 0)
 		slice := reflect.New(sliceType.Type()).Interface()
 
-		db.Table(table).Limit(GM.PageSize).Find(slice)
+		err := db.Find(&slice, "")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
 		w.WriteHeader(http.StatusOK);
 		if err := json.NewEncoder(w).Encode(slice); err != nil {
@@ -294,8 +306,15 @@ func AddTableRow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db, _:= GM.getSession()
-	if db.Table(table).Create(obj).RowsAffected == 0{
+	/*if db.Table(table).Create(obj).RowsAffected == 0{
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}*/
+
+	_, err = db.Insert(obj)
+	if err != nil {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -321,7 +340,13 @@ func RemoveTableRow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db, _:= GM.getSession()
-	if db.Table(table).Delete(obj).RowsAffected == 0{
+	/*if db.Table(table).Delete(obj).RowsAffected == 0{
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}*/
+
+	_, err = db.Remove(obj)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

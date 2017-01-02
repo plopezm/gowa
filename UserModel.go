@@ -23,7 +23,7 @@ func (u GowaUser) IsValid() bool{
 func (u GowaUser) Create() error{
 	db, _:= GM.getSession();
 
-	err := db.Create(&u).Error;
+	_, err := db.Insert(&u);
 	if err != nil {
 		return err;
 	};
@@ -33,7 +33,7 @@ func (u GowaUser) Create() error{
 func (u GowaUser) Delete() error{
 	db, _:= GM.getSession();
 
-	err := db.Delete(&u).Error;
+	_, err := db.Remove(&u);
 	if err != nil {
 		return err;
 	};
