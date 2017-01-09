@@ -24,21 +24,18 @@ func (am *GowaManager) init(dbtype string, dbpath string, pageSize uint32) error
 
 	err = am.db.Open(dbtype, dbpath)
 	if err != nil {
-		panic(err)
-	}
-	defer am.db.Close();
-
-	if err != nil {
 		return err;
 	}
+	//defer am.db.Close();
+
 	am.dbPath = dbpath
 	am.dbType = dbtype
 	am.adminTables = make(map[string]GowaTable)
 	am.PageSize = pageSize
 
-	if err := am.db.Migrate(GowaUser{}).Error; err != nil {
-		txt := "AutoMigrate Job table failed"
-		panic( txt )
+	err = am.db.Migrate(&GowaUser{})
+	if err != nil{
+		return err
 	}
 
 	return nil
@@ -54,7 +51,13 @@ func (am *GowaManager) getSession() (*goedb.DB, error){
 	return am.db, nil;
 }
 
-func (am *GowaManager) End(){
+func (am *GowaManager) Open() (error){
+	var err error
+	am.db, err = am.getSession()
+	return err
+}
+
+func (am *GowaManager) Close(){
 	am.db.Close();
 }
 
@@ -137,16 +140,49 @@ func parseModel(model interface{}) (reflect.Type, string, []GowaColumn){
 	return typ, typ.Name(), columnSlice
 }
 
-func (am *GowaManager) AddModel(model interface{}){
+func (am *GowaManager) AddModel(i interface{}) (error){
 	var gowaTable GowaTable
 
-	gowaTable.Model, gowaTable.Title, gowaTable.Columns = parseModel(model)
+	typ := reflect.TypeOf(i)
+
+	// if a pointer to a struct is passed, get the type of the dereferenced object
+	if typ.Kind() == reflect.Ptr{
+		typ = typ.Elem()
+	}
+
+	err := am.db.Migrate(i)
+	if err != nil {
+		return err
+	}
+
+	model, err := am.db.Model(i)
+	if err != nil {
+		return err
+	}
+
+	gowaTable.Title = model.Name
+	gowaTable.Columns = model.Columns
+	gowaTable.Model = model.Model
 
 	am.adminTables[gowaTable.Title] = gowaTable
+	return nil
 }
 
-func (am *GowaManager) RemoveModel(table_name string){
-	delete(am.adminTables, table_name)
+func (am *GowaManager) RemoveModel(i interface{}) error{
+	typ := reflect.TypeOf(i)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
+	table_name := typ.Name()
+
+
+	err := am.db.DropTable(i)
+	if err != nil {
+		delete(am.adminTables, table_name)
+	}
+
+	return err
 }
 
 func (am *GowaManager) getRoutes() goServerUtils.Routes {

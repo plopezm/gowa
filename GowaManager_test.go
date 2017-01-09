@@ -5,19 +5,19 @@ import (
 )
 
 type User struct{
-	Email		string	`goedb:"pk" gowa:"pk"`
+	Email		string	`goedb:"pk"`
 	Password	string
 	Role		string
 }
 
 type Company struct{
-	UserEmail	string	`goedb:"pk" gowa:"pk;fk_table:User;fk_col:Email"`
+	UserEmail	string	`goedb:"pk"`
 	Name		string
 	Cif		string	`goedb:"unique"`
 }
 
 type Driver struct {
-	UserEmail	string	`goedb:"pk,fk=User(Email)" gowa:"pk;fk_table:User;fk_col:Email"`
+	UserEmail	string	`goedb:"pk,fk=User(Email)"`
 	Name		string	`goedb:"unique"`
 }
 
@@ -27,7 +27,65 @@ type Vehicle struct {
 	Plate		string	`goedb:"unique"`
 }
 
+var am *GowaManager
 
+func TestGowaManager_AddModel(t *testing.T) {
+	am = NewGowa("sqlite3", "test.db", 10)
+
+	am.Open()
+	defer am.Close()
+
+	err := am.AddModel(&User{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = am.AddModel(&Company{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = am.AddModel(&Driver{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = am.AddModel(&Vehicle{})
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+
+func TestGowaManager_RemoveModel(t *testing.T) {
+
+	am.Open()
+	defer am.Close()
+
+	err := am.RemoveModel(&Company{})
+	if err != nil {
+		t.Error(err)
+	}
+	err = am.RemoveModel(&Vehicle{})
+	if err != nil {
+		t.Error(err)
+	}
+	err = am.RemoveModel(&Driver{})
+	if err != nil {
+		t.Error(err)
+	}
+	err = am.RemoveModel(&User{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = am.db.Model(&User{})
+	if err == nil {
+		t.Error("Model exists")
+	}
+}
+
+/*
 func TestGowaParseModel(t *testing.T){
 	var gowaTable GowaTable
 
@@ -100,4 +158,21 @@ func TestGowaParseModel(t *testing.T){
 		}
 	}
 
-}
+
+	gowaTable.Model, gowaTable.Title, gowaTable.Columns = parseModel(&Vehicle{})
+
+	if gowaTable.Title != "Driver"{
+		t.Error("Error getting model name")
+	}
+
+	for key, value := range gowaTable.Columns {
+		switch key{
+		case 0:
+			if !(value.Name == "Owner" && value.Ctype == "string" && value.Pk && value.Fktab == "Driver" && value.Fkcol == "UserEmail") {
+				t.Log(value)
+				t.Error("Column not valid")
+			}
+		}
+	}
+
+}*/

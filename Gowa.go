@@ -9,7 +9,7 @@ import (
 	"github.com/plopezm/goServerUtils"
 )
 
-func Init(dbtype string, dbpath string, pageSize uint32) *GowaManager{
+func NewGowa(dbtype string, dbpath string, pageSize uint32) *GowaManager{
 	GM = new(GowaManager)
 	GM.init(dbtype, dbpath, pageSize)
 	return GM

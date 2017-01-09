@@ -1,6 +1,9 @@
 package gowa
 
-import "reflect"
+import (
+	"reflect"
+	"github.com/plopezm/goedb"
+)
 
 type GowaColumn struct {
 	Name 		string			`json:"name"`
@@ -11,10 +14,10 @@ type GowaColumn struct {
 }
 
 type GowaTable struct {
-	Title		string		`json:"title"`
-	Columns		[]GowaColumn	`json:"columns"`
-	Rows 		interface{}  	`json:"rows"`
-	Page		uint64		`json:"page"`
+	Title		string			`json:"title"`
+	Columns		[]goedb.GoedbColumn	`json:"columns"`
+	Rows 		interface{}  		`json:"rows"`
+	Page		uint64			`json:"page"`
 
-	Model		reflect.Type	`json:"-"`
+	Model		reflect.Type		`json:"-"`
 }
