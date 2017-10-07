@@ -9,6 +9,7 @@ import (
 	"github.com/plopezm/goServerUtils"
 	"reflect"
 	"fmt"
+	"net/http"
 )
 
 var GM *GowaManager
@@ -19,6 +20,13 @@ type GowaManager struct {
 	dbType      string
 	dbPath      string
 	PageSize    uint32
+}
+
+type Route struct {
+	Name string
+	Method string
+	Pattern string
+	HandlerFunc http.HandlerFunc
 }
 
 
@@ -89,51 +97,51 @@ func (am *GowaManager) RemoveModel(table_name string){
 	delete(am.adminTables, table_name)
 }
 
-func (am *GowaManager) getRoutes() goServerUtils.Routes {
-	routes := goServerUtils.Routes{
-		goServerUtils.Route{
+func (am *GowaManager) getRoutes() []Route {
+	routes := []Route{
+		Route{
 			"ValidateSession",
 			"GET",
 			"/gowa/api/validate",
 			ValidateSession,
 		},
-		goServerUtils.Route{
+		Route{
 			"LoginAdmin",
 			"GET",
 			"/gowa/api/login",
 			Login,
 		},
-		goServerUtils.Route{
+		Route{
 			"CreateAdmin",
 			"PUT",
 			"/gowa/api/register",
 			CreateUser,
 		},
-		goServerUtils.Route{
+		Route{
 			"GetTablesStruct",
 			"GET",
 			"/gowa/api/rest/tables",
 			GetTablesStruct,
 		},
-		goServerUtils.Route{
+		Route{
 			"GetTable",
 			"GET",
 			"/gowa/api/rest/tables/show/{table}",
 			GetTable,
 		},
-		goServerUtils.Route{
+		Route{
 			"ShowTableRows",
 			"GET",
 			"/gowa/api/rest/tables/show/rows/{table}",
 			ShowTableRows,
 		},
-		goServerUtils.Route{
+		Route{
 			"AddTableRow",
 			"PUT",
 			"/gowa/api/rest/tables/add/row/{table}",
 			AddTableRow,
 		},
-		goServerUtils.Route{
+		Route{
 			"RemoveTableRow",
 			"DELETE",
 			"/gowa/api/rest/tables/remove/row/{table}",

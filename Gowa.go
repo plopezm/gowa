@@ -41,7 +41,6 @@ func GowaAddRoutes(router *mux.Router) *mux.Router{
 	for _,route := range GM.getRoutes(){
 		var handler http.Handler
 		handler = route.HandlerFunc
-		handler = goServerUtils.Logger(handler, route.Name)
 		fmt.Println("Adding route: "+route.Name+" -> "+route.Method+" "+route.Pattern);
 		router.
 		Methods(route.Method).
